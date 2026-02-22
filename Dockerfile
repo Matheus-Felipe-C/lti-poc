@@ -1,0 +1,18 @@
+# Build and run for Coolify (or any container platform)
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies first for better layer caching
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy application code
+COPY index.js ./
+
+# Coolify sets PORT; app reads process.env.PORT (default 3000)
+EXPOSE 3000
+
+ENV NODE_ENV=development
+
+CMD ["npm", "start"]
