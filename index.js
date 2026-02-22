@@ -1,21 +1,25 @@
+require('dotenv').config()
 const path = require('path')
 
-// Require Provider 
+// Require Provider
 const lti = require('ltijs').Provider
 
 // Setup provider
-lti.setup('LTIKEY', // Key used to sign cookies and tokens
+lti.setup(process.env.LTI_KEY, // Key used to sign cookies and tokens
   { // Database configuration
-    url: 'mongodb://localhost/database',
-    connection: { user: 'user', pass: 'password' }
+    url: process.env.MONGODB_URL,
+    connection: {
+      user: process.env.MONGODB_USER,
+      pass: process.env.MONGODB_PASSWORD
+    }
   },
   { // Options
     appRoute: '/', loginRoute: '/login', // Optionally, specify some of the reserved routes
     cookies: {
-      secure: false, // Set secure to true if the testing platform is in a different domain and https is being used
-      sameSite: '' // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
+      secure: process.env.COOKIES_SECURE === 'true',
+      sameSite: process.env.COOKIES_SAME_SITE || ''
     },
-    devMode: true // Set DevMode to false if running in a production environment with https
+    devMode: process.env.NODE_ENV !== 'production'
   }
 )
 
@@ -26,17 +30,23 @@ lti.onConnect((token, req, res) => {
 })
 
 const setup = async () => {
-  // Deploy server and open connection to the database
-  await lti.deploy({ port: 3000 }) // Specifying port. Defaults to 3000
+  if (!process.env.PLATFORM_URL || !process.env.LTI_KEY) {
+    throw new Error('Missing required env: PLATFORM_URL and LTI_KEY must be set (copy .env.example to .env)')
+  }
+
+  const port = parseInt(process.env.PORT || '3000', 10)
+  await lti.deploy({ port })
+
+  const platformUrl = process.env.PLATFORM_URL.replace(/\/$/, '') // trim trailing slash
 
   // Register platform
   await lti.registerPlatform({
-    url: 'https://platform.url',
-    name: 'Platform Name',
-    clientId: 'TOOLCLIENTID',
-    authenticationEndpoint: 'https://platform.url/auth',
-    accesstokenEndpoint: 'https://platform.url/token',
-    authConfig: { method: 'JWK_SET', key: 'https://platform.url/keyset' }
+    url: platformUrl,
+    name: process.env.PLATFORM_NAME,
+    clientId: process.env.PLATFORM_CLIENT_ID,
+    authenticationEndpoint: `${platformUrl}/auth`,
+    accesstokenEndpoint: `${platformUrl}/token`,
+    authConfig: { method: 'JWK_SET', key: `${platformUrl}/keyset` }
   })
 }
 
