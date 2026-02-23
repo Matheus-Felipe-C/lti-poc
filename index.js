@@ -25,8 +25,9 @@ lti.setup(process.env.LTI_KEY, // Key used to sign cookies and tokens
 
 // Set lti launch callback
 lti.onConnect((token, req, res) => {
-  console.log(token)
-  return res.send('It\'s alive!')
+  const name = token?.userInfo?.name || token?.userInfo?.given_name || token?.userInfo?.family_name || 'there'
+  const escaped = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+  return res.send(`<h1>Hello, ${escaped(name)}!</h1>`)
 })
 
 const setup = async () => {
