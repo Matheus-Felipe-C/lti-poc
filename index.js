@@ -39,7 +39,7 @@ lti.onConnect((token, req, res) => {
   const name = token?.userInfo?.name || token?.userInfo?.given_name || token?.userInfo?.family_name || 'there'
   const escaped = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en">  
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -71,9 +71,12 @@ const setup = async () => {
     url: platformUrl,
     name: process.env.PLATFORM_NAME,
     clientId: process.env.PLATFORM_CLIENT_ID,
-    authenticationEndpoint: `${platformUrl}/auth`,
-    accesstokenEndpoint: `${platformUrl}/token`,
-    authConfig: { method: 'JWK_SET', key: `${platformUrl}/keyset` }
+    authenticationEndpoint: `${platformUrl}/mod/lti/auth.php`,
+    accesstokenEndpoint: `${platformUrl}/mod/lti/token.php`,
+    authConfig: { 
+      method: 'JWK_SET', 
+      key: `${platformUrl}/mod/lti/certs.php` 
+    }
   })
 }
 
