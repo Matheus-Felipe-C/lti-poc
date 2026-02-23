@@ -4,6 +4,15 @@ const path = require('path')
 // Require Provider
 const lti = require('ltijs').Provider
 
+// Log every request (so we can see in Coolify whether Moodle hits the app and which path)
+function requestLogger(app) {
+  app.use((req, res, next) => {
+    const ts = new Date().toISOString()
+    console.log('[LTI] Request', ts, req.method, req.url, req.path, '| query:', Object.keys(req.query || {}).length, '| body keys:', req.body ? Object.keys(req.body) : [])
+    next()
+  })
+}
+
 // Setup provider
 lti.setup(process.env.LTI_KEY, // Key used to sign cookies and tokens
   { // Database configuration
@@ -19,7 +28,8 @@ lti.setup(process.env.LTI_KEY, // Key used to sign cookies and tokens
       secure: process.env.COOKIES_SECURE === 'true',
       sameSite: process.env.COOKIES_SAME_SITE || ''
     },
-    devMode: process.env.NODE_ENV !== 'production'
+    devMode: process.env.NODE_ENV !== 'production',
+    serverAddon: requestLogger
   }
 )
 
@@ -52,6 +62,7 @@ const setup = async () => {
   const port = parseInt(process.env.PORT || '3000', 10)
   await lti.deploy({ port })
   console.log('[LTI] Server listening on port', port, '- app route: /')
+  console.log('[LTI] Set env DEBUG=provider:main in Coolify for more ltijs logs')
 
   const platformUrl = process.env.PLATFORM_URL.replace(/\/$/, '') // trim trailing slash
 
