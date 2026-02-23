@@ -25,9 +25,23 @@ lti.setup(process.env.LTI_KEY, // Key used to sign cookies and tokens
 
 // Set lti launch callback
 lti.onConnect((token, req, res) => {
+  console.log('[LTI] onConnect called', { path: req.path, userInfo: token?.userInfo })
   const name = token?.userInfo?.name || token?.userInfo?.given_name || token?.userInfo?.family_name || 'there'
   const escaped = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
-  return res.send(`<h1>Hello, ${escaped(name)}!</h1>`)
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LTI Tool</title>
+</head>
+<body>
+  <h1>Hello, ${escaped(name)}!</h1>
+  <script>console.log('[LTI iframe] Loaded. User:', ${JSON.stringify(name)})</script>
+</body>
+</html>`
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
+  return res.send(html)
 })
 
 const setup = async () => {
@@ -37,6 +51,7 @@ const setup = async () => {
 
   const port = parseInt(process.env.PORT || '3000', 10)
   await lti.deploy({ port })
+  console.log('[LTI] Server listening on port', port, '- app route: /')
 
   const platformUrl = process.env.PLATFORM_URL.replace(/\/$/, '') // trim trailing slash
 
